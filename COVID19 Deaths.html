@@ -1,0 +1,255 @@
+<html>
+
+<head>
+    <style>
+        body {
+            background-color: rgb(21, 8, 23);
+            margin: 50px;
+        }
+
+        h1 {
+            color: white;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        h2 {
+            color: white;
+            opacity: 75%;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 400;
+        }
+
+        h3 {
+            color: white;
+            opacity: 75%;
+            font-family: 'Rubik', sans-serif;
+            font-weight: 400;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://typeiii.github.io/jquery-csv/src/jquery.csv.js"></script>
+
+</head>
+
+<body>
+
+    <h1>Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2), a.k.a. COVID-19</h1>
+    <h2>A visual of confirmed deaths in China, Italy, the United Kingdom, and the United States from the 22nd of January,
+        2020 to the Present.</h2>
+    <h3>Values updated live from raw data from the John Hopkins University Coronavirus Resource Center.</h3>
+    <br>
+    <br>
+    <div>
+        <canvas id="myChart"></canvas>
+    </div>
+
+    </div>
+
+</body>
+
+<script>
+    function drawMyChart(confirmedCases, deathCases, recoveredCases) {
+
+        var paintingCanvas = document.getElementById('myChart').getContext('2d');
+        var chart = new Chart(paintingCanvas, {
+            // The type of chart we want to create
+            type: 'line',
+
+            // The data for our dataset
+            data: {
+
+                labels: dateLabels,
+                datasets: [
+                    {
+                        label: 'Confirmed China Deaths',
+                        backgroundColor: 'rgba(42, 132, 200, 0.2)',
+                        borderColor: 'rgb(42, 132, 200)',
+                        borderWidth: 1,
+                        fill: false,
+                        pointBorderColor: 'rgb(42, 132, 200)',
+                        pointBackgroundColor: 'rgb(42, 132, 200)',
+                        data: deathCases['China']
+                    },
+                    {
+                        label: 'Confirmed Italy Deaths',
+                        backgroundColor: 'rgba(219, 0, 103, 0.2)',
+                        borderColor: 'rgb(219, 0, 103)',
+                        borderWidth: 1,
+                        fill: false,
+                        pointBorderColor: 'rgb(219, 0, 103)',
+                        pointBackgroundColor: 'rgb(219, 0, 103)',
+                        data: deathCases['Italy']
+                    },
+                    {
+                        label: 'Confirmed UK Deaths',
+                        backgroundColor: 'rgba(89, 255, 172, 0.2)',
+                        borderColor: 'rgb(89, 255, 172)',
+                        borderWidth: 1,
+                        fill: false,
+                        pointBorderColor: 'rgb(89, 255, 172)',
+                        pointBackgroundColor: 'rgb(89, 255, 172)',
+                        data: deathCases['United Kingdom']
+                    },
+                    {
+                        label: 'Confirmed US Deaths',
+                        backgroundColor: 'rgba(71, 0, 219, 0.2)',
+                        borderColor: 'rgb(71, 0, 219)',
+                        borderWidth: 1,
+                        fill: false,
+                        pointBorderColor: 'rgb(71, 0, 219)',
+                        pointBackgroundColor: 'rgb(71, 0, 219)',
+                        data: deathCases['US']
+                    }
+                ]
+            },
+
+            // Configuration options go here
+            options: {}
+        });
+    }
+
+
+
+
+
+
+
+
+    // --------------------------------------------------------
+    // Designers ignore everything below!
+    // --------------------------------------------------------
+
+
+
+
+    var confirmedDataFromGithub = '';
+    var dateLabels;
+
+    var confirmedCases;
+    var fatalityCases;
+    var recoveredCases;
+
+    $(document).ready(function () {
+        $.when(
+            $.ajax({
+                type: "GET",
+                url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv",
+                dataType: "text",
+                success: function (data) {
+                    confirmedDataFromGithub = data;
+                    dateLabels = getListOfDates(confirmedDataFromGithub);
+                    confirmedCases = getTotalsByCountryFromCSV(data);
+                }
+            }),
+            $.ajax({
+                type: "GET",
+                url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv",
+                dataType: "text",
+                success: function (data) {
+                    deathDataFromGithub = data;
+                    fatalityCases = getTotalsByCountryFromCSV(data);
+                }
+            }),
+            $.ajax({
+                type: "GET",
+                url: "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv",
+                dataType: "text",
+                success: function (data) {
+                    confirmedDataFromGithub = data;
+                    recoveredCases = getTotalsByCountryFromCSV(data);
+                }
+            })
+
+        ).then(function () {
+            console.log('all ajax/internet calls have been completed!');
+
+            drawMyChart(confirmedCases, fatalityCases, recoveredCases);
+        })
+
+
+        function getListOfDates(muhData) {
+            console.log($.csv)
+            var result = $.csv.toArrays(muhData);
+            var headers = result[0]; // this gets us the first row (aka the headers)
+            var dateLabels = headers.slice(4)
+            console.log(dateLabels)
+            return dateLabels;
+        }
+
+        function getSingleRowByCountryName(muhData, nameOfTheCountry) {
+            var result = $.csv.toArrays(muhData); // an array of arrays (or list of lists)
+
+            for (var currentListPosition = 0; currentListPosition < result.length; currentListPosition++) {
+                var theListImLookingAt = result[currentListPosition];
+                if (theListImLookingAt[1] == nameOfTheCountry) {
+                    slicedData = theListImLookingAt.slice(4)
+                    return slicedData;
+                }
+            }
+        }
+
+        function getTotalsByCountryName(muhData, nameOfTheCountry) {
+            var result = muhData;
+
+            var runningTotal = new Array(result[0].length - 4).fill(0);
+
+            for (var currentListPosition = 0; currentListPosition < result.length; currentListPosition++) {
+                var theListImLookingAt = result[currentListPosition];
+                if (theListImLookingAt[1] == nameOfTheCountry) {
+                    slicedData = theListImLookingAt.slice(4)
+                    for (var currentColumnIndex = 0; currentColumnIndex < slicedData.length; currentColumnIndex++) {
+                        runningTotal[currentColumnIndex] = runningTotal[currentColumnIndex] + parseInt(slicedData[currentColumnIndex])
+                    }
+                }
+            }
+
+            return runningTotal;
+        }
+
+        function onlyUnique(value, index, self) {
+            return self.indexOf(value) === index;
+        }
+
+        function getUniqueListOfCountries(muhData) {
+            var result = muhData;
+            var countries = [];
+            var uniqueListOfCountries = [];
+
+            for (var currentListPosition = 0; currentListPosition < result.length; currentListPosition++) {
+                var theListImLookingAt = result[currentListPosition];
+                countries.push(theListImLookingAt[1]);
+            }
+
+            uniqueListOfCountries = countries.filter(onlyUnique);
+            uniqueListOfCountries = uniqueListOfCountries.slice(1);
+            uniqueListOfCountries.sort();
+            return uniqueListOfCountries;
+        }
+
+        function getTotalsByCountryFromCSV(muhData) {
+
+            var csvData = $.csv.toArrays(muhData); // an array of arrays (or list of lists)
+
+            var uniqueCountries = getUniqueListOfCountries(csvData);
+
+            var countryData = {};
+
+            for (var index = 0; index < uniqueCountries.length; index++) {
+                var nameOfCurrentCountry = uniqueCountries[index];
+                var totalForThisCountry = getTotalsByCountryName(csvData, nameOfCurrentCountry);
+
+                countryData[nameOfCurrentCountry] = totalForThisCountry;
+            }
+
+            return countryData;
+
+        }
+
+    });
+
+</script>
+
+</html>
